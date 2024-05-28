@@ -7,7 +7,7 @@ import socket
 parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.append(parent_dir)
 from inc.custom_logger import get_custom_logger
-import inc.messages
+from inc.messages import status, mode, messageID
 
 # ------------------------ GLOBAL VARIABLES ------------------------
 # Get the custom logger
@@ -32,9 +32,26 @@ def main (server,):
 
     stop = False
     while not stop:
+        logger.debug("Accepting connection")
         client_socket, client_address = server.accept()
-        logger.info(f"Connection accepted under {client_address}")
+        try:
+            logger.info(f"Connection accepted under {client_address}")
+
+            
+            request = client_socket.recv(1024)
+            request = request.decode("utf-8") # convert bytes to string
+            logger.debug(f"From {client_address} received \"{request}\"")
+                
+        except:
+            logger.warning('Keyboard interrupt detected')
+            client_socket.close()
+            logger.info(f"client_socket under {client_address} closed.")
+            raise Exception(KeyboardInterrupt) 
+        
+
+
         client_socket.close()
+        logger.info(f"client_socket under {client_address} closed.")
 
 
 # ------------------------ MAIN FUNCTION ------------------------
