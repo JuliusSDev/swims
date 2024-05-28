@@ -12,19 +12,37 @@ from inc.custom_logger import get_custom_logger
 # Get the custom logger
 logger = get_custom_logger('my_logger', level=logging.DEBUG)
 
-IPADDRESS = "192.168.0.1"
-PORT = 666
+IPADDRESS = "127.0.0.1"
+PORT = 8000
 
 # ------------------------ USER FUNCTION ------------------------
-def test(i):
-    logger.debug(f"Entering test() {i}")
-    for a in IPADDRESS:
-        logger.debug(f"a: {a}")
-        
+def setup_server():
+    logger.debug(f"Entering function setup_server()")
+    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server.bind((IPADDRESS,PORT))
+    server.listen(0)
+    logger.info(f"Server setup under {IPADDRESS}:{PORT}")
+    logger.debug(f"Leaving function setup_server() with returning \"server\"")
+    return server
+
+
+def main (server,):
+    logger.debug(f"Entering function main()")
+    
+    stop = False
+    while not stop:
+        i = 0
+
+
 
 # ------------------------ MAIN FUNCTION ------------------------
 if __name__ == "__main__":
     logger.debug("Starting in central_node.py")
-    for i in range(1000000):
-        test(i)
-    
+    server = setup_server()
+    try:
+        main(server)
+    except:
+        logger.warning('Keyboard interrupt detected')
+
+    server.close()
+    logger.info(f"Server closed.")
