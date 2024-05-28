@@ -5,9 +5,9 @@ import time
 # # Get the custom logger
 # logger = get_custom_logger('my_logger', level=logging.DEBUG)
 # # Log messages
-# logger.debug('This is a debug message.') # e.g. for variable values, in which if-Statement we are ...
-# logger.info('This is an info message.') # e.g. in which function we are
-# logger.warning('This is a warning message.') # possible unknown behavior
+# logger.debug('This is a debug message.') # e.g. for variable values, in which if-Statement/function we are ...
+# logger.info('This is an info message.') # e.g. if a process is finished e.g. server is setup 
+# logger.warning('This is a warning message.') # possible unknown behavior / Wrong if-Statements e.g. waiting for a server connection then you can log it with Warning
 # logger.error('This is an error message.') # Values that should not appear
 # logger.critical('This is a critical message.') # I don't know what the fuck is going on
 
