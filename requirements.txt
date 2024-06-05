@@ -1,3 +1,6 @@
 logging
 numpy
 matplotlib
+adafruit-circuitpython-dht
+Adafruit-Blinka
+RPi.GPIO

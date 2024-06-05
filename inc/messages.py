@@ -45,7 +45,7 @@ status = {
     "PUMPNOTWORKING" : 3,
 }
 
-mode = {
+modes = {
     "WINTER": 0,
     "SPRING": 1,
     "SUMMER": 2,
