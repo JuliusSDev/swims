@@ -26,11 +26,32 @@ def setup_server():
     logger.debug(f"Leaving function setup_server() with returning \"server\"")
     return server
 
-def handle_first_message(message, client_socket):
+def handle_message_new_node(message, client_socket):
     if (message[0] == "0x42"): # UNKNOWN NODE -> give it a new one 
         msg1 = f"0x43 {newNode}"
         client_socket.send(msg1.encode("utf-8"))
         newNode += 1
+
+def handle_message_emergency():
+    return
+
+def handle_message_settings_ack():
+    return
+
+def handle_message_close_connection():
+    return
+
+def handle_message(message, client_socket):
+    received_msgID = message[0]
+    if(received_msgID == messageID["NEW_NODE_INIT"]):
+        handle_message_new_node(message, client_socket)
+    elif(received_msgID == messageID["EMERGENCY"]):
+        handle_message_emergency()
+    elif(received_msgID == messageID["SETTINGS_ACK"]):
+        handle_message_settings_ack()
+    elif(received_msgID == messageID["CLOSE"]):
+        handle_message_close_connection()
+
 
 
 def main (server,):
@@ -42,7 +63,7 @@ def main (server,):
         client_socket, client_address = server.accept()
         try:
             logger.info(f"Connection accepted under {client_address}")
-            handle_first_message(client_socket.recv(1024).decode("utf-8").split(" "),client_socket)
+            handle_message(client_socket.recv(1024).decode("utf-8").split(" "),client_socket)
             
             request = client_socket.recv(1024).decode("utf-8").split(" ")
             logger.debug(f"From {client_address} received \"NodeID:{request[0]}; temp:{request[1]}; soil:{request[2]}; humid:{request[3]}\"")
