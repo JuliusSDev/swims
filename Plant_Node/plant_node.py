@@ -118,7 +118,7 @@ def sendMessage ():
     average_temp_sent = average(temp)
     average_soilMoist_sent = average(soilMoist)
     average_humidity_sent = average(humidity)
-    msg = f"{NODEID} {average_temp_sent} {average_soilMoist_sent} {average_humidity_sent}"
+    msg = f"{messageID["INIT"]} {NODEID} {average_temp_sent} {average_soilMoist_sent} {average_humidity_sent}"
     temp.clear()
     soilMoist.clear()
     humidity.clear()
