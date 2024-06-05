@@ -32,11 +32,12 @@
 messageID = {
     "EMERGENCY" : 0x00,
     "INIT" : 0x01,
-    "INIT_ACK" : 0x02,
-    "SETTINGS" : 0x03,
-    "SETTINGS_ACK" : 0x04,
-    "CLOSE" : 0x05,
-    "CLOSE_ACK" : 0x06
+    "INIT_ACK_AND_SEND_SETTINGS" : 0x02,
+    "SETTINGS_ACK" : 0x03,
+    "CLOSE" : 0x04,
+    "CLOSE_ACK" : 0x05,
+    "NEW_NODE_INIT" : 0x42,
+    "NEW_NODE_ACK" : 0x43
 }
 
 status = {
