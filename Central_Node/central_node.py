@@ -33,11 +33,24 @@ def create_new_csv_file(nodeID):
         file.write("temp, humidity, soilMoisture\n")
         file.close()
 
-def write_data_in_csv(nodeID, temp, humidity, soilMoisture):
+def write_data_in_csv(nodeID, temp_, humidity, soilMoisture):
     logger.debug(f"Entering function create_new_csv_file()")
     file_path = f'data/node{nodeID}.csv'
-    with open(file_path, mode='w', newline='') as file:
-        file.write("{temp}, {humidity}, {soilMoisture}\n")
+    header_needed = False
+    with open(file_path, mode='a', newline='') as file:
+        file.close()
+    with open(file_path, mode='r', newline='') as file:
+        header = file.readline()
+        logger.debug(f"Checking if Header is there or not: {header} and temp, humidity, soilMoisture\n")
+        if header != "temp, humidity, soilMoisture\n":
+            logger.debug("Header needed")
+            header_needed = True
+        file.close()
+
+    with open(file_path, mode='a', newline='') as file:
+        if header_needed:
+            file.write("temp, humidity, soilMoisture\n")
+        file.write(f"{temp_}, {humidity}, {soilMoisture}\n")
         file.close()
 
 

@@ -34,8 +34,8 @@ GPIO.setup(PIN_RELAIS, GPIO.OUT)
 mode = 0
 nodeID = -1
 goalSoilMoisture = 20
-wakeupIntervall = 5 # Every 5 seconds
-sendIntervall = 120 # every 2 minutes
+wakeupIntervall = 2 # Every 5 seconds
+sendIntervall = 20 # every 2 minutes
 
 server_ip = "192.168.211.217"  # replace with the server's IP address
 server_port = 8000
@@ -75,7 +75,11 @@ def readDHT22 ():
         # dht_device.exit()
         logger.error(f"Catched unknown exception {error.args[0]} ")
     logger.error("Reached failsafe values for DHT22")
-    return (-40, 0) # Failsafe if it couldn't get values
+    global temp, humidity
+    if len(temp) > 0 and len(humidity) > 0:
+        return (temp[len(temp)-1], humidity[len(humidity)-1]) # Failsafe if it couldn't get values
+    else:
+        return (25, 55)
 
 def readSoilMoisture():
     # Read the analog value
@@ -121,7 +125,7 @@ def pumpWater (volume):
 
 def average(lst):
     logger.debug(f"Entering function average()")
-    return sum(lst) / len(lst)
+    return round(sum(lst) / len(lst), 1)
 
 
 def initiate_node():
