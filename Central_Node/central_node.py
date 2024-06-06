@@ -28,10 +28,12 @@ def setup_server():
 
 def handle_message_new_node(message, client_socket):
     logger.debug(f"Entering function handle_message_new_node()")
-    if (message[0] == "0x42"): # UNKNOWN NODE -> give it a new one 
-        msg1 = f"{messageID['NEW_NODE_ACK']} {newNode}"
-        client_socket.send(msg1.encode("utf-8"))
-        newNode += 1
+    #if (message[0] == messageID['']): # UNKNOWN NODE -> give it a new one 
+    global newNode
+    msg1 = f"{messageID['NEW_NODE_ACK']} {newNode}"
+    logger.debug(f"Sending {msg1}")
+    client_socket.send(msg1.encode("utf-8"))
+    newNode += 1
 
 def handle_message_emergency():
     logger.debug(f"Entering function handle_message_emergency()")
@@ -50,13 +52,14 @@ def handle_message(message, client_socket):
     logger.debug(f"Received following message: {message}")
     received_msgID = message[0]
     logger.debug(f"searching for following messageID: {message[0]}")
-    if(received_msgID == messageID["NEW_NODE_INIT"]):
+    logger.debug(f"checking for: {messageID['NEW_NODE_INIT']}")
+    if(received_msgID == str(messageID["NEW_NODE_INIT"])):
         handle_message_new_node(message, client_socket)
-    elif(received_msgID == messageID["EMERGENCY"]):
+    elif(received_msgID == str(messageID["EMERGENCY"])):
         handle_message_emergency()
-    elif(received_msgID == messageID["SETTINGS_ACK"]):
+    elif(received_msgID == str(messageID["SETTINGS_ACK"])):
         handle_message_settings_ack()
-    elif(received_msgID == messageID["CLOSE"]):
+    elif(received_msgID == str(messageID["CLOSE"])):
         handle_message_close_connection()
     else:
         logger.error("Unknown Message type detected")
@@ -70,9 +73,9 @@ def main (server,):
     while not stop:
         logger.debug("Accepting connection")
         client_socket, client_address = server.accept()
-        try:
-            logger.info(f"Connection accepted under {client_address}")
-            handle_message(client_socket.recv(1024).decode("utf-8").split(" "),client_socket)
+        #try:
+        logger.info(f"Connection accepted under {client_address}")
+        handle_message(client_socket.recv(1024).decode("utf-8").split(" "),client_socket)
             
             # request = client_socket.recv(1024).decode("utf-8").split(" ")
             # logger.debug(f"From {client_address} received \"NodeID:{request[0]}; temp:{request[1]}; soil:{request[2]}; humid:{request[3]}\"")
@@ -92,11 +95,11 @@ def main (server,):
             # logger.debug(f"From {client_address} received\"")
             # nodeID = request[0]
                 
-        except:
-            logger.warning('Keyboard interrupt detected')
-            client_socket.close()
-            logger.info(f"client_socket under {client_address} closed.")
-            raise Exception(KeyboardInterrupt) 
+        #except:
+            # logger.warning('Keyboard interrupt detected')
+            # client_socket.close()
+            # logger.info(f"client_socket under {client_address} closed.")
+            # raise Exception(KeyboardInterrupt) 
         
 
 
@@ -108,10 +111,10 @@ def main (server,):
 if __name__ == "__main__":
     logger.debug("Starting in central_node.py")
     server = setup_server()
-    try:
-        main(server)
-    except:
-        logger.warning('Keyboard interrupt detected')
+    # try:
+    main(server)
+    # except:
+    #     logger.warning('Keyboard interrupt detected')
 
     server.close()
     logger.info(f"Server closed.")
