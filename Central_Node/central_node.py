@@ -13,7 +13,7 @@ from inc.messages import status, modes, messageID
 # Get the custom logger
 logger = get_custom_logger('my_logger', level=logging.DEBUG)
 newNode = 0
-IPADDRESS = "127.0.0.1"
+IPADDRESS = "192.168.211.217"
 PORT = 8000
 
 # ------------------------ USER FUNCTION ------------------------
@@ -27,22 +27,29 @@ def setup_server():
     return server
 
 def handle_message_new_node(message, client_socket):
+    logger.debug(f"Entering function handle_message_new_node()")
     if (message[0] == "0x42"): # UNKNOWN NODE -> give it a new one 
-        msg1 = f"0x43 {newNode}"
+        msg1 = f"{messageID['NEW_NODE_ACK']} {newNode}"
         client_socket.send(msg1.encode("utf-8"))
         newNode += 1
 
 def handle_message_emergency():
+    logger.debug(f"Entering function handle_message_emergency()")
     return
 
 def handle_message_settings_ack():
+    logger.debug(f"Entering function handle_message_settings_ack()")
     return
 
 def handle_message_close_connection():
+    logger.debug(f"Entering function handle_message_close_connection()")
     return
 
 def handle_message(message, client_socket):
+    logger.debug(f"Entering function main()")
+    logger.debug(f"Received following message: {message}")
     received_msgID = message[0]
+    logger.debug(f"searching for following messageID: {message[0]}")
     if(received_msgID == messageID["NEW_NODE_INIT"]):
         handle_message_new_node(message, client_socket)
     elif(received_msgID == messageID["EMERGENCY"]):
@@ -51,6 +58,8 @@ def handle_message(message, client_socket):
         handle_message_settings_ack()
     elif(received_msgID == messageID["CLOSE"]):
         handle_message_close_connection()
+    else:
+        logger.error("Unknown Message type detected")
 
 
 
@@ -65,23 +74,23 @@ def main (server,):
             logger.info(f"Connection accepted under {client_address}")
             handle_message(client_socket.recv(1024).decode("utf-8").split(" "),client_socket)
             
-            request = client_socket.recv(1024).decode("utf-8").split(" ")
-            logger.debug(f"From {client_address} received \"NodeID:{request[0]}; temp:{request[1]}; soil:{request[2]}; humid:{request[3]}\"")
-            nodeID = request[0]
-            avrgtemp = request[1]
-            avrgsoil = request[2]
-            avrghumidity = request[3]
+            # request = client_socket.recv(1024).decode("utf-8").split(" ")
+            # logger.debug(f"From {client_address} received \"NodeID:{request[0]}; temp:{request[1]}; soil:{request[2]}; humid:{request[3]}\"")
+            # nodeID = request[0]
+            # avrgtemp = request[1]
+            # avrgsoil = request[2]
+            # avrghumidity = request[3]
 
-            goalsoil = 70
-            wakeupInterval = 1
-            sendInterval = 10
-            mode = modes["SUMMER"]
-            msg1 = f"0x02 {nodeID} {avrgtemp} {avrgsoil} {avrghumidity} {mode} {goalsoil} {wakeupInterval} {sendInterval}"
-            client_socket.send(msg1.encode("utf-8"))
+            # goalsoil = 70
+            # wakeupInterval = 1
+            # sendInterval = 10
+            # mode = modes["SUMMER"]
+            # msg1 = f"0x02 {nodeID} {avrgtemp} {avrgsoil} {avrghumidity} {mode} {goalsoil} {wakeupInterval} {sendInterval}"
+            # client_socket.send(msg1.encode("utf-8"))
 
-            request = client_socket.recv(1024).decode("utf-8").split(" ")
-            logger.debug(f"From {client_address} received\"")
-            nodeID = request[0]
+            # request = client_socket.recv(1024).decode("utf-8").split(" ")
+            # logger.debug(f"From {client_address} received\"")
+            # nodeID = request[0]
                 
         except:
             logger.warning('Keyboard interrupt detected')
