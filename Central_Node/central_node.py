@@ -26,6 +26,22 @@ def setup_server():
     logger.debug(f"Leaving function setup_server() with returning \"server\"")
     return server
 
+def create_new_csv_file(nodeID):
+    logger.debug(f"Entering function create_new_csv_file()")
+    file_path = f'data/node{nodeID}.csv'
+    with open(file_path, mode='w', newline='') as file:
+        file.write("temp, humidity, soilMoisture\n")
+        file.close()
+
+def write_data_in_csv(nodeID, temp, humidity, soilMoisture):
+    logger.debug(f"Entering function create_new_csv_file()")
+    file_path = f'data/node{nodeID}.csv'
+    with open(file_path, mode='w', newline='') as file:
+        file.write("{temp}, {humidity}, {soilMoisture}\n")
+        file.close()
+
+
+
 def handle_message_new_node(message, client_socket):
     logger.debug(f"Entering function handle_message_new_node()")
     #if (message[0] == messageID['']): # UNKNOWN NODE -> give it a new one 
@@ -33,6 +49,7 @@ def handle_message_new_node(message, client_socket):
     msg1 = f"{messageID['NEW_NODE_ACK']} {newNode}"
     logger.debug(f"Sending {msg1}")
     client_socket.send(msg1.encode("utf-8"))
+    create_new_csv_file(newNode)
     newNode += 1
 
 def handle_message_emergency():
@@ -47,6 +64,15 @@ def handle_message_close_connection():
     logger.debug(f"Entering function handle_message_close_connection()")
     return
 
+def handle_message_init_contact(message, client_socket):
+    logger.debug(f"Entering function handle_message_init_contact()")
+    nodeID = message[1]
+    status = message[2]
+    temp = message[3]
+    soil = message[4]
+    humid = message[5]
+    write_data_in_csv(nodeID, temp, humid, soil)
+
 def handle_message(message, client_socket):
     logger.debug(f"Entering function main()")
     logger.debug(f"Received following message: {message}")
@@ -55,6 +81,8 @@ def handle_message(message, client_socket):
     logger.debug(f"checking for: {messageID['NEW_NODE_INIT']}")
     if(received_msgID == str(messageID["NEW_NODE_INIT"])):
         handle_message_new_node(message, client_socket)
+    elif(received_msgID == str(messageID["INIT"])):
+        handle_message_init_contact(message, client_socket)
     elif(received_msgID == str(messageID["EMERGENCY"])):
         handle_message_emergency()
     elif(received_msgID == str(messageID["SETTINGS_ACK"])):
@@ -75,7 +103,7 @@ def main (server,):
         client_socket, client_address = server.accept()
         #try:
         logger.info(f"Connection accepted under {client_address}")
-        handle_message(client_socket.recv(1024).decode("utf-8").split(" "),client_socket)
+        handle_message(client_socket.recv(1024).decode("utf-8").split(" "), client_socket)
             
             # request = client_socket.recv(1024).decode("utf-8").split(" ")
             # logger.debug(f"From {client_address} received \"NodeID:{request[0]}; temp:{request[1]}; soil:{request[2]}; humid:{request[3]}\"")

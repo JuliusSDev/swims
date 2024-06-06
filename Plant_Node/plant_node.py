@@ -8,9 +8,9 @@ import random
 import adafruit_dht
 import board
 import RPi.GPIO as GPIO
-# import busio
-# import adafruit_ads1x15.ads1115 as ADS
-# from adafruit_ads1x15.analog_in import AnalogIn
+import busio
+import adafruit_ads1x15.ads1115 as ADS
+from adafruit_ads1x15.analog_in import AnalogIn
 import csv
 
 # own libraries
@@ -46,18 +46,18 @@ soilMoist = []
 humidity = []
 
 
-# # Calibration values (you need to determine these by measuring)
-# DRY_VALUE = 32767  # Replace with your dry sensor value
-# WET_VALUE = 0  # Replace with your wet sensor value
+# Calibration values (you need to determine these by measuring)
+DRY_VALUE = 30022  # Replace with your dry sensor value
+WET_VALUE = 9255  # Replace with your wet sensor value
 
-# # Create the I2C bus
-# i2c = busio.I2C(board.SCL, board.SDA)
+# Create the I2C bus
+i2c = busio.I2C(board.SCL, board.SDA)
 
-# # Create the ADC object using the I2C bus
-# adc = Adafruit_ADS1x15.ADS1115()
+# Create the ADC object using the I2C bus
+adc = ADS.ADS1115(i2c)
 
-# # Create single-ended input on channel 0
-# chan = AnalogIn(adc, ADS.P0)
+# Create single-ended input on channel 0
+chan = AnalogIn(adc, ADS.P0)
 
 # ------------------------ USER FUNCTION ------------------------
 def readDHT22 ():
@@ -78,20 +78,20 @@ def readDHT22 ():
     return (-40, 0) # Failsafe if it couldn't get values
 
 def readSoilMoisture():
-    # # Read the analog value
-    # raw_value = chan.value
-    # voltage = chan.voltage
+    # Read the analog value
+    raw_value = chan.value
+    voltage = chan.voltage
     
-    # # Convert raw_value to percentage
-    # if raw_value > DRY_VALUE:
-    #     raw_value = DRY_VALUE
-    # elif raw_value < WET_VALUE:
-    #     raw_value = WET_VALUE
+    # Convert raw_value to percentage
+    if raw_value > DRY_VALUE:
+        raw_value = DRY_VALUE
+    elif raw_value < WET_VALUE:
+        raw_value = WET_VALUE
     
-    # moisture_percentage = (1 - (raw_value - WET_VALUE) / (DRY_VALUE - WET_VALUE)) * 100
+    moisture_percentage = (1 - (raw_value - WET_VALUE) / (DRY_VALUE - WET_VALUE)) * 100
     
-    # return moisture_percentage, raw_value, voltage
-    return 100
+    return moisture_percentage
+    return 10
 
 def collectData ():
     logger.debug(f"Entering function collectData()")
@@ -145,12 +145,13 @@ def initiate_node():
     answer1 = client.recv(1024).decode("utf-8").split(" ")
     logger.debug(f"Received with {answer1}")
 
-    if(len(answer1) != 1):
+    if(len(answer1) < 1):
         return
-    if(answer1[0] == messageID['NEW_NODE_ACK']):
+    
+    logger.debug(f"Comparing {answer1[0]} with {str(messageID['NEW_NODE_ACK'])}")
+    if(answer1[0] == str(messageID['NEW_NODE_ACK'])):
         global nodeID
         nodeID = answer1[1]
-        nodeID = 42
         logger.debug(f"nodeID changed to {answer1[1]}")
 
 
@@ -165,7 +166,7 @@ def sendUpdate ():
     average_soilMoist_sent = average(soilMoist)
     average_humidity_sent = average(humidity)
 
-    msg = f"0x01 {nodeID} {average_temp_sent} {average_soilMoist_sent} {average_humidity_sent}"
+    msg = f"{messageID['INIT']} {nodeID} {status['OK']} {average_temp_sent} {average_soilMoist_sent} {average_humidity_sent}" #TODO always OK
 
     temp.clear()
     soilMoist.clear()
@@ -183,42 +184,43 @@ def sendUpdate ():
     client.send(msg.encode("utf-8")[:1024])
 
 
-    answer1 = client.recv(1024).decode("utf-8")
-    logger.debug(f"Received answer with {answer1}")
-    answer1 = answer1.split(" ")
-    msgID1 = answer1[0]
-    nodeID1 = answer1[1]
-    if ((nodeID1 == nodeID) and (msgID1 == "0x02")):
-        global mode,goalSoilMoisture,wakeupIntervall,sendIntervall
-        average_temp_recv = answer1[2]
-        average_soilMoist_recv = answer1[3]
-        average_humidity_recv = answer1[4]
-        mode = answer1[5]
-        goalSoilMoisture = answer1[6]
-        wakeupIntervall = answer1[7]
-        sendIntervall = answer1[8]
+    # answer1 = client.recv(1024).decode("utf-8")
+    # logger.debug(f"Received answer with {answer1}")
+    # answer1 = answer1.split(" ")
+    # msgID1 = answer1[0]
+    # nodeID1 = answer1[1]
+    # if ((nodeID1 == nodeID) and (msgID1 == "0x02")):
+    #     global mode,goalSoilMoisture,wakeupIntervall,sendIntervall
+    #     average_temp_recv = answer1[2]
+    #     average_soilMoist_recv = answer1[3]
+    #     average_humidity_recv = answer1[4]
+    #     mode = answer1[5]
+    #     goalSoilMoisture = answer1[6]
+    #     wakeupIntervall = answer1[7]
+    #     sendIntervall = answer1[8]
 
-        if ((average_temp_sent != int(average_temp_recv)) or (average_humidity_sent != int(average_humidity_recv)) or (average_soilMoist_sent != int(average_soilMoist_recv))):
-            logger.error("received data differs from sent data")
-        msg = f"0x03 {nodeID} {mode} {goalSoilMoisture} {wakeupIntervall} {sendIntervall}"
-        logger.info(f"Send message with {msg}")
-        client.send(msg.encode("utf-8")[:1024])
+    #     if ((average_temp_sent != int(average_temp_recv)) or (average_humidity_sent != int(average_humidity_recv)) or (average_soilMoist_sent != int(average_soilMoist_recv))):
+    #         logger.error("received data differs from sent data")
+    #     msg = f"0x03 {nodeID} {mode} {goalSoilMoisture} {wakeupIntervall} {sendIntervall}"
+    #     logger.info(f"Send message with {msg}")
+    #     client.send(msg.encode("utf-8")[:1024])
 
 
     client.close()
     logger.debug(f"Client socket closed.")
 
-def write_settings(nodeID, goalSoilMoisture):
+def write_settings():
     logger.debug(f"Entering function write_settings()")
-    file_path = 'settings.csv'
-    # with open(file_path, mode='w', newline='') as file:
-    #     writer = csv.writer(file)
-    #     writer.writerow(['nodeID', 'goalSoilMoisture'])
-    #     writer.writerow([nodeID, goalSoilMoisture])
+    file_path = '/home/pn/swims-main/Plant_Node/settings.csv'
+    with open(file_path, mode='w', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(['nodeID', 'goalSoilMoisture'])
+        global nodeID, goalSoilMoisture
+        writer.writerow([nodeID, goalSoilMoisture])
 
 def get_node_id():
     logger.debug(f"Entering function get_node_id()")
-    file_path = 'settings.csv'
+    file_path = '/home/pn/swims-main/Plant_Node/settings.csv'
     # Check if the file exists
     if os.path.exists(file_path):
         logger.debug(f"Settings.csv exists")
@@ -231,10 +233,9 @@ def get_node_id():
             goalSoilMoisture = float(settings['goalSoilMoisture'])
             
     else:
-        logger.debug(f"Settings.csv does not exists")
-        #global goalSoilMoisture, nodeID
+        logger.debug(f"settings.csv does not exists")
         initiate_node()
-        write_settings(nodeID, goalSoilMoisture)
+        write_settings()
 
 
 def main ():
@@ -255,9 +256,9 @@ def main ():
             pumpWater(100)
 
         if ((lastSent + sendIntervall) < time.time()):
-            # sendUpdate()
+            sendUpdate()
             lastSent = time.time()
-            
+
         time.sleep(wakeupIntervall)
 
 

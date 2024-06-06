@@ -1,7 +1,0 @@
-[0.22 ms] [DEBUG] Starting in central_node.py
-[0.30 ms] [DEBUG] Entering function setup_server()
-[0.37 ms] [INFO] Server setup under 127.0.0.1:8000
-[0.40 ms] [DEBUG] Leaving function setup_server() with returning "server"
-[0.42 ms] [DEBUG] Entering function main()
-[2143.26 ms] [WARNING] Keyboard interrupt detected
-[2143.34 ms] [INFO] Server closed.
