@@ -4,3 +4,4 @@ matplotlib
 adafruit-circuitpython-dht
 Adafruit-Blinka
 RPi.GPIO
+adafruit-circuitpython-ads1x15
