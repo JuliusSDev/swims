@@ -32,7 +32,7 @@ GPIO.setup(PIN_RELAIS, GPIO.OUT)
 
 # Configure default values
 mode = 0
-NODEID = -1
+nodeID = -1
 goalSoilMoisture = 20
 wakeupIntervall = 5 # Every 5 seconds
 sendIntervall = 120 # every 2 minutes
@@ -95,10 +95,14 @@ def readSoilMoisture():
 
 def collectData ():
     logger.debug(f"Entering function collectData()")
+
     (temp_, humid_) = readDHT22()
     soil_ = readSoilMoisture()
+
     logger.info(f"Read values with temp: {temp_}; humidity: {humid_}; soilMoisture: {soil_}")
-    global temp,soilMoist,humidity
+
+    global temp, soilMoist, humidity
+
     temp.append(temp_)
     soilMoist.append(soil_)
     humidity.append(humid_)
@@ -138,25 +142,31 @@ def initiate_node():
     logger.debug(f"Send message with {msg}")
     client.send(msg.encode("utf-8")[:1024])
 
-    answer1 = client.recv(1024).decode("utf-8")
-    logger.debug(f"Send received with {answer1}")
+    answer1 = client.recv(1024).decode("utf-8").split(" ")
+    logger.debug(f"Received with {answer1}")
 
+    if(len(answer1) != 1):
+        return
     if(answer1[0] == messageID['NEW_NODE_ACK']):
-        global NODEID
-        NODEID = answer1[1]
-        logger.debug(f"NODEID changed to {answer1[1]}")
+        global nodeID
+        nodeID = answer1[1]
+        nodeID = 42
+        logger.debug(f"nodeID changed to {answer1[1]}")
 
 
 
 
-def sendMessage ():
-    
-    global NODEID
-    logger.debug(f"Entering function sendMessage()")
+
+def sendUpdate ():
+    logger.debug(f"Entering function sendUpdate()")
+    global nodeID
+
     average_temp_sent = average(temp)
     average_soilMoist_sent = average(soilMoist)
     average_humidity_sent = average(humidity)
-    msg = f"0x01 {NODEID} {average_temp_sent} {average_soilMoist_sent} {average_humidity_sent}"
+
+    msg = f"0x01 {nodeID} {average_temp_sent} {average_soilMoist_sent} {average_humidity_sent}"
+
     temp.clear()
     soilMoist.clear()
     humidity.clear()
@@ -178,7 +188,7 @@ def sendMessage ():
     answer1 = answer1.split(" ")
     msgID1 = answer1[0]
     nodeID1 = answer1[1]
-    if ((nodeID1 == NODEID) and (msgID1 == "0x02")):
+    if ((nodeID1 == nodeID) and (msgID1 == "0x02")):
         global mode,goalSoilMoisture,wakeupIntervall,sendIntervall
         average_temp_recv = answer1[2]
         average_soilMoist_recv = answer1[3]
@@ -190,7 +200,7 @@ def sendMessage ():
 
         if ((average_temp_sent != int(average_temp_recv)) or (average_humidity_sent != int(average_humidity_recv)) or (average_soilMoist_sent != int(average_soilMoist_recv))):
             logger.error("received data differs from sent data")
-        msg = f"0x03 {NODEID} {mode} {goalSoilMoisture} {wakeupIntervall} {sendIntervall}"
+        msg = f"0x03 {nodeID} {mode} {goalSoilMoisture} {wakeupIntervall} {sendIntervall}"
         logger.info(f"Send message with {msg}")
         client.send(msg.encode("utf-8")[:1024])
 
@@ -216,38 +226,38 @@ def get_node_id():
         with open(file_path, mode='r') as file:
             reader = csv.DictReader(file)
             settings = next(reader)
-            global goalSoilMoisture, NODEID
-            NODEID = settings['nodeID']
+            global goalSoilMoisture, nodeID
+            nodeID = settings['nodeID']
             goalSoilMoisture = float(settings['goalSoilMoisture'])
             
     else:
         logger.debug(f"Settings.csv does not exists")
-        #global goalSoilMoisture, NODEID
-        (NODEID, goalSoilMoisture) = initiate_node()
-        write_settings(NODEID, goalSoilMoisture)
+        #global goalSoilMoisture, nodeID
+        initiate_node()
+        write_settings(nodeID, goalSoilMoisture)
 
 
 def main ():
     logger.debug(f"Entering function main()")
-    global NODEID, PIN_RELAIS
+    global nodeID, PIN_RELAIS
     GPIO.output(PIN_RELAIS, GPIO.HIGH)
 
     get_node_id()
-    logger.info(f"Node loaded with NODEID: {NODEID}")
-
-    # initiate_node()
-
+    logger.info(f"Node loaded with nodeID: {nodeID}")
 
     lastSent = 0
     while True:
+        logger.debug(f"nodeID in main: {nodeID}")
+
         collectData()
-        if(soilMoist[len(soilMoist-1)] < goalSoilMoisture):
+
+        if(soilMoist[len(soilMoist)-1] < goalSoilMoisture):
             pumpWater(100)
 
-        if lastSent+ sendIntervall < time.time():
-            # sendMessage()
+        if ((lastSent + sendIntervall) < time.time()):
+            # sendUpdate()
             lastSent = time.time()
-
+            
         time.sleep(wakeupIntervall)
 
 
