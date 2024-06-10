@@ -193,12 +193,16 @@ def sendUpdate ():
     answer1 = answer1.split(" ")
     msgID1 = answer1[0]
     nodeID1 = answer1[1]
-    if ((nodeID1 == nodeID) and (msgID1 == "0x02")):
+    logger.debug(f"comparing {int(nodeID1)} and {int(nodeID)}      and {int(msgID1)}  and {int('2')}")
+    if ((int(nodeID1) == int(nodeID)) and (int(msgID1) == int("2"))):
         global mode,goalSoilMoisture,wakeupIntervall,sendIntervall
-        mode = answer1[5]
-        goalSoilMoisture = answer1[6]
-        wakeupIntervall = answer1[7]
-        sendIntervall = answer1[8]
+        mode = answer1[2]
+        logger.debug(f"set wakeupIntervall etc with goalSoilMoisture {answer1[3]} wakeupIntervall {answer1[4]} sendIntervall {answer1[5]}")
+        goalSoilMoisture = int(answer1[3])
+        wakeupIntervall = int(answer1[4])
+        sendIntervall = int(answer1[5])
+    else:
+        logger.debug("Didn't set anything #############################")
 
 
 
@@ -240,7 +244,7 @@ def send_pump_error():
 
 def main ():
     logger.debug(f"Entering function main()")
-    global nodeID, PIN_RELAIS
+    global nodeID, PIN_RELAIS, wakeupIntervall, sendIntervall
     GPIO.output(PIN_RELAIS, GPIO.HIGH)
 
     get_node_id()
@@ -249,7 +253,7 @@ def main ():
     lastSent = 0
     timesPumped = 0
     while True:
-        logger.debug(f"nodeID in main: {nodeID}")
+        logger.debug(f"Main oben: nodeID: {nodeID}; goalSoilMoisture: {goalSoilMoisture};  goalSoilMoisture: {wakeupIntervall};  sendIntervall: {sendIntervall}")
 
         collectData()
 
@@ -266,6 +270,8 @@ def main ():
         if ((lastSent + sendIntervall) < time.time()):
             sendUpdate()
             lastSent = time.time()
+
+        logger.debug(f"Main unten: nodeID: {nodeID}; goalSoilMoisture: {goalSoilMoisture};  goalSoilMoisture: {wakeupIntervall};  sendIntervall: {sendIntervall}")
 
         time.sleep(wakeupIntervall)
 

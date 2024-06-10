@@ -78,18 +78,21 @@ def handle_message_close_connection():
     return
 
 def getSettings(nodeID):
+    logger.debug(f"Entering function getSettings()")
     file_path = f'settings.csv'
     with open(file_path, mode='r', newline='') as file:
         i = 0
         for lines in file:
-            i += 1  
-            if nodeID == i:
+            logger.debug(f"lines: {lines}; i: {i}; nodeID: {nodeID}")
+            logger.debug(f"checking for: i: {i-1} and nodeID: {nodeID}")
+            if int(nodeID) == int(i-1):
                 lines = lines.split(", ")
                 logger.debug(f"Lines: {lines}; lines[0]: {lines[0]}; lines[1]: {lines[1]}; lines[2]: {lines[2]};")
                 goalSoilMoisture = lines[0]
                 wakeUpIntervall = lines[1]
                 sendIntervall = lines[2]
                 return (goalSoilMoisture, wakeUpIntervall, sendIntervall)
+            i += 1  
 
         file.close()
     return (30,2,10)
@@ -103,7 +106,7 @@ def handle_message_init_contact(message, client_socket):
     humid = message[5]
     (goalSoilMoisture, wakeUpIntervall, sendIntervall) = getSettings(nodeID)
     write_data_in_csv(nodeID, temp, humid, soil)
-    msg = f"{messageID['INIT_ACK_AND_SEND_SETTINGS']} {modes['SUMMER']} {goalSoilMoisture} {wakeUpIntervall} {sendIntervall}"
+    msg = f"{messageID['INIT_ACK_AND_SEND_SETTINGS']} {nodeID} {modes['SUMMER']} {goalSoilMoisture} {wakeUpIntervall} {sendIntervall}"
     logger.debug(f"Answer with message {msg}")
     client_socket.send(msg.encode("utf-8"))
 
