@@ -77,6 +77,23 @@ def handle_message_close_connection():
     logger.debug(f"Entering function handle_message_close_connection()")
     return
 
+def getSettings(nodeID):
+    file_path = f'settings.csv'
+    with open(file_path, mode='r', newline='') as file:
+        i = 0
+        for lines in file:
+            i += 1  
+            if nodeID == i:
+                lines = lines.split(", ")
+                logger.debug(f"Lines: {lines}; lines[0]: {lines[0]}; lines[1]: {lines[1]}; lines[2]: {lines[2]};")
+                goalSoilMoisture = lines[0]
+                wakeUpIntervall = lines[1]
+                sendIntervall = lines[2]
+                return (goalSoilMoisture, wakeUpIntervall, sendIntervall)
+
+        file.close()
+    return (30,2,10)
+
 def handle_message_init_contact(message, client_socket):
     logger.debug(f"Entering function handle_message_init_contact()")
     nodeID = message[1]
@@ -84,7 +101,11 @@ def handle_message_init_contact(message, client_socket):
     temp = message[3]
     soil = message[4]
     humid = message[5]
+    (goalSoilMoisture, wakeUpIntervall, sendIntervall) = getSettings(nodeID)
     write_data_in_csv(nodeID, temp, humid, soil)
+    msg = f"{messageID['INIT_ACK_AND_SEND_SETTINGS']} {modes['SUMMER']} {goalSoilMoisture} {wakeUpIntervall} {sendIntervall}"
+    logger.debug(f"Answer with message {msg}")
+    client_socket.send(msg.encode("utf-8"))
 
 def handle_message(message, client_socket):
     logger.debug(f"Entering function main()")
@@ -110,39 +131,12 @@ def handle_message(message, client_socket):
 def main (server,):
     logger.debug(f"Entering function main()")
 
-    stop = False
-    while not stop:
+    while True:
         logger.debug("Accepting connection")
         client_socket, client_address = server.accept()
-        #try:
+
         logger.info(f"Connection accepted under {client_address}")
         handle_message(client_socket.recv(1024).decode("utf-8").split(" "), client_socket)
-            
-            # request = client_socket.recv(1024).decode("utf-8").split(" ")
-            # logger.debug(f"From {client_address} received \"NodeID:{request[0]}; temp:{request[1]}; soil:{request[2]}; humid:{request[3]}\"")
-            # nodeID = request[0]
-            # avrgtemp = request[1]
-            # avrgsoil = request[2]
-            # avrghumidity = request[3]
-
-            # goalsoil = 70
-            # wakeupInterval = 1
-            # sendInterval = 10
-            # mode = modes["SUMMER"]
-            # msg1 = f"0x02 {nodeID} {avrgtemp} {avrgsoil} {avrghumidity} {mode} {goalsoil} {wakeupInterval} {sendInterval}"
-            # client_socket.send(msg1.encode("utf-8"))
-
-            # request = client_socket.recv(1024).decode("utf-8").split(" ")
-            # logger.debug(f"From {client_address} received\"")
-            # nodeID = request[0]
-                
-        #except:
-            # logger.warning('Keyboard interrupt detected')
-            # client_socket.close()
-            # logger.info(f"client_socket under {client_address} closed.")
-            # raise Exception(KeyboardInterrupt) 
-        
-
 
         client_socket.close()
         logger.info(f"client_socket under {client_address} closed.")

@@ -188,26 +188,19 @@ def sendUpdate ():
     client.send(msg.encode("utf-8")[:1024])
 
 
-    # answer1 = client.recv(1024).decode("utf-8")
-    # logger.debug(f"Received answer with {answer1}")
-    # answer1 = answer1.split(" ")
-    # msgID1 = answer1[0]
-    # nodeID1 = answer1[1]
-    # if ((nodeID1 == nodeID) and (msgID1 == "0x02")):
-    #     global mode,goalSoilMoisture,wakeupIntervall,sendIntervall
-    #     average_temp_recv = answer1[2]
-    #     average_soilMoist_recv = answer1[3]
-    #     average_humidity_recv = answer1[4]
-    #     mode = answer1[5]
-    #     goalSoilMoisture = answer1[6]
-    #     wakeupIntervall = answer1[7]
-    #     sendIntervall = answer1[8]
+    answer1 = client.recv(1024).decode("utf-8")
+    logger.debug(f"Received answer with {answer1}")
+    answer1 = answer1.split(" ")
+    msgID1 = answer1[0]
+    nodeID1 = answer1[1]
+    if ((nodeID1 == nodeID) and (msgID1 == "0x02")):
+        global mode,goalSoilMoisture,wakeupIntervall,sendIntervall
+        mode = answer1[5]
+        goalSoilMoisture = answer1[6]
+        wakeupIntervall = answer1[7]
+        sendIntervall = answer1[8]
 
-    #     if ((average_temp_sent != int(average_temp_recv)) or (average_humidity_sent != int(average_humidity_recv)) or (average_soilMoist_sent != int(average_soilMoist_recv))):
-    #         logger.error("received data differs from sent data")
-    #     msg = f"0x03 {nodeID} {mode} {goalSoilMoisture} {wakeupIntervall} {sendIntervall}"
-    #     logger.info(f"Send message with {msg}")
-    #     client.send(msg.encode("utf-8")[:1024])
+
 
 
     client.close()
@@ -241,6 +234,9 @@ def get_node_id():
         initiate_node()
         write_settings()
 
+def send_pump_error():
+    logger.debug(f"Entering function send_pump_error()")
+    return
 
 def main ():
     logger.debug(f"Entering function main()")
@@ -251,6 +247,7 @@ def main ():
     logger.info(f"Node loaded with nodeID: {nodeID}")
 
     lastSent = 0
+    timesPumped = 0
     while True:
         logger.debug(f"nodeID in main: {nodeID}")
 
@@ -258,6 +255,13 @@ def main ():
 
         if(soilMoist[len(soilMoist)-1] < goalSoilMoisture):
             pumpWater(100)
+            timesPumped += 1
+            if ( timesPumped >= 3 ):
+                send_pump_error()
+        else:
+            timesPumped = 0
+        
+        
 
         if ((lastSent + sendIntervall) < time.time()):
             sendUpdate()
