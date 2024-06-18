@@ -17,9 +17,9 @@ def plot_csv_columns_together(file_path):
     for column in df.columns[:3]:
         plt.plot(df[column], label=column)
     
-    plt.title('Plot of Three Columns')
-    plt.xlabel('Index')
-    plt.ylabel('Values')
+    plt.title('Values of Node 0')
+    plt.xlabel('time')
+    plt.ylabel('percent/°C')
     plt.legend()
     plt.grid(True)
     
